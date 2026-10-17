@@ -1,10 +1,17 @@
+# Python environment
 .venv/
+venv/
+
+# Secrets
 .env
+.env.*
+!.env.example
+
+# Python cache and tests
 __pycache__/
+*.py[cod]
 .pytest_cache/
-*.py[cod]
-jobs.db.env
-.venv/
-__pycache__/
-*.py[cod]
+
+# Local database
 jobs.db
+jobs.db-*
