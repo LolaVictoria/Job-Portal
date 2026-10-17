@@ -1,6 +1,3 @@
-#########################################
-#  checks job titles and seniority.
-########################################
 TARGET_ROLES = [
     "frontend engineer",
     "software engineer",
@@ -21,15 +18,17 @@ SENIORITY_EXCLUSIONS = [
     "lead",
     "director",
     "head of",
+    "head,",
     "vice president",
     "vp ",
+    " vp",
     "distinguished",
 ]
 
 
 def matches_role(job_title: str) -> bool:
-    """Return True if a job matches our target roles and seniority."""
-    title = job_title.lower()
+    """Check whether a job title matches our target roles and level."""
+    title = job_title.lower().strip()
 
     matches_target_role = any(
         role in title for role in TARGET_ROLES
@@ -40,4 +39,3 @@ def matches_role(job_title: str) -> bool:
     )
 
     return matches_target_role and not is_too_senior
-

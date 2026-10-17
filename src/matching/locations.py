@@ -50,9 +50,30 @@ def is_remote(location: str) -> bool:
 
 
 def matches_location_or_remote(location: str) -> bool:
-    """Match target locations or advertised remote roles."""
-    return matches_location(location) or is_remote(location)
+    """Match target locations or remote jobs in relevant regions."""
+    normalized = (location or "").strip().lower()
 
+    if matches_location(normalized):
+        return True
+
+    if not is_remote(normalized):
+        return False
+
+    # Keep US remote listings, as requested.
+    if any(term in normalized for term in [
+        "united states", "usa", "u.s.", "us only",
+    ]):
+        return True
+
+    # Accept remote listings without a clear geographic restriction.
+    restricted_regions = [
+        "india", "brazil", "australia", "asia",
+    ]
+
+    if any(region in normalized for region in restricted_regions):
+        return False
+
+    return True
 
 def classify_remote_scope(location: str) -> str:
     """Classify a remote job's advertised geographic scope."""

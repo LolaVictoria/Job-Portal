@@ -1,4 +1,4 @@
-company_name,source_type,board_token,careers_url,enabled
+company_name,source_type,board_token,careers_url,enabled,tenant,site,domain
 Greenhouse,greenhouse,greenhouse,https://job-boards.greenhouse.io/greenhouse,true
 Spotify,lever,spotify,https://jobs.lever.co/spotify,true
 Anthropic,greenhouse,anthropic,https://job-boards.greenhouse.io/anthropic,true
@@ -19,3 +19,4 @@ Indeed,greenhouse,indeed,https://job-boards.greenhouse.io/indeed,true
 mongodb,greenhouse,mongodb,https://job-boards.greenhouse.io/mongodb,true
 pinterest,greenhouse,pinterest,https://job-boards.greenhouse.io/pinterest,true
 Reddit,greenhouse,reddit,https://job-boards.greenhouse.io/reddit,true
+NVIDIA,workday,NVIDIAExternalCareerSite,https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite,true,nvidia,NVIDIAExternalCareerSite,wd5.myworkdayjobs.com
