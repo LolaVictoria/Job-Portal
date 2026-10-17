@@ -36,7 +36,7 @@ jobs:
 
       - name: Inspect database state
         run: |
-          python -c "from src.storage.database import get_connection; c=get_connection(); print('Jobs:', c.execute('SELECT COUNT(*) FROM jobs').fetchone()[0]); print('Pending outbox:', c.execute(\"SELECT COUNT(*) FROM email_outbox WHERE status='PENDING'\").fetchone()[0]); c.close()"
+          python -c "from src.storage.database import get_connection; c=get_connection(); print('Jobs:', c.execute('SELECT COUNT(*) AS n FROM jobs').fetchone()['n']); print('Pending outbox:', c.execute(\"SELECT COUNT(*) AS n FROM email_outbox WHERE status='PENDING'\").fetchone()['n']); c.close()"
 
       - name: Send email digest
         run: python -m src.notifications.send_pending_digest
