@@ -1,0 +1,8 @@
+company_name,source_type,board_token
+Stripe,greenhouse,stripe
+Figma,greenhouse,figma
+GitLab,greenhouse,gitlab
+HashiCorp,greenhouse,hashicorp
+Cloudflare,greenhouse,cloudflare
+Datadog,greenhouse,datadog
+Duolingo,greenhouse,duolingo

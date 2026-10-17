@@ -56,7 +56,7 @@ def main():
         try:
             if source_type == "greenhouse":
                 result = fetch_greenhouse_jobs(board_token)
-                raw_jobs = result["jobs"]
+                raw_jobs = result
 
                 normalized_jobs = [
                     normalize_greenhouse_job(job)

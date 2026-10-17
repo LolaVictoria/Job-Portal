@@ -17,4 +17,4 @@ def fetch_jobs(board_token: str) -> list[dict]:
     )
     response.raise_for_status()
     data = response.json()
-    return data
+    return data.get("jobs", [])

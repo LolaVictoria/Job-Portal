@@ -3,4 +3,8 @@
 __pycache__/
 .pytest_cache/
 *.py[cod]
+jobs.db.env
+.venv/
+__pycache__/
+*.py[cod]
 jobs.db
