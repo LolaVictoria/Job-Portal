@@ -135,39 +135,39 @@ def main():
 
     # Workday employers
     # Workday employers
-for company in load_companies():
-    if company["source_type"].strip().lower() != "workday":
-        continue
+    for company in load_companies():
+        if company["source_type"].strip().lower() != "workday":
+            continue
 
-    company_name = company["company_name"].strip()
-    tenant = company["tenant"].strip()
-    site = company["site"].strip()
-    domain = company["domain"].strip()
+        company_name = company["company_name"].strip()
+        tenant = company["tenant"].strip()
+        site = company["site"].strip()
+        domain = company["domain"].strip()
 
-    print(f"\nChecking {company_name} (workday)")
+        print(f"\nChecking {company_name} (workday)")
 
-    try:
-        raw_jobs = fetch_workday_jobs(
-            tenant=tenant,
-            site=site,
-            domain=domain,
-        )
-
-        normalized_jobs = [
-            normalize_workday_job(
-                job,
-                company_name=company_name,
+        try:
+            raw_jobs = fetch_workday_jobs(
                 tenant=tenant,
                 site=site,
                 domain=domain,
             )
-            for job in raw_jobs
-        ]
 
-        print(f"Jobs fetched: {len(raw_jobs)}")
-        process_jobs(normalized_jobs)
+            normalized_jobs = [
+                normalize_workday_job(
+                    job,
+                    company_name=company_name,
+                    tenant=tenant,
+                    site=site,
+                    domain=domain,
+                )
+                for job in raw_jobs
+            ]
 
-    except Exception as error:
-        print(f"Could not fetch {company_name}: {error}")
+            print(f"Jobs fetched: {len(raw_jobs)}")
+            process_jobs(normalized_jobs)
+
+        except Exception as error:
+            print(f"Could not fetch {company_name}: {error}")
 if __name__ == "__main__":
     main()
