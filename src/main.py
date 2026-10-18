@@ -1,13 +1,14 @@
-
 import csv
 from pathlib import Path
 
 from src.collectors.greenhouse.fetch_jobs import (
     fetch_jobs as fetch_greenhouse_jobs,
 )
+
 from src.collectors.greenhouse.normalize_job import (
     normalize_job as normalize_greenhouse_job,
 )
+
 from src.collectors.lever.fetch_jobs import (
     fetch_jobs as fetch_lever_jobs,
 )
@@ -25,14 +26,46 @@ from src.collectors.workday.normalize_job import (
     normalize_job as normalize_workday_job,
 )
 
+from src.collectors.ashby.fetch_jobs import (
+    fetch_jobs as fetch_ashby_jobs,
+)
+from src.collectors.ashby.normalize_job import (
+    normalize_job as normalize_ashby_job,
+)
+from src.collectors.workable.fetch_jobs import (
+    fetch_jobs as fetch_workable_jobs,
+)
+from src.collectors.workable.normalize_job import (
+    normalize_job as normalize_workable_job,
+)
+
+
+from src.collectors.recruitee.fetch_jobs import (
+    fetch_jobs as fetch_recruitee_jobs,
+)
+from src.collectors.recruitee.normalize_jobs import (
+    normalize_job as normalize_recruitee_job,
+)
+
+from src.collectors.personio.fetch_jobs import (
+    fetch_jobs as fetch_personio_jobs,
+)
+from src.collectors.personio.normalize_jobs import (
+    normalize_job as normalize_personio_job,
+)
+
+from src.collectors.rippling.fetch_jobs import (
+    fetch_jobs as fetch_rippling_jobs,
+)
+from src.collectors.rippling.normalize_jobs import (
+    normalize_job as normalize_rippling_job,
+)
+
 from src.matching.roles import matches_role
 from src.matching.locations import matches_location_or_remote
 from src.storage.database import initialize_database, save_job
 
-
-COMPANIES_FILE = (
-    Path(__file__).resolve().parents[1] / "data" / "companies.csv"
-)
+COMPANIES_FILE = Path(__file__).resolve().parents[1] / "data" / "companies.csv"
 
 
 def load_companies():
@@ -41,9 +74,7 @@ def load_companies():
         companies = list(csv.DictReader(file))
 
     return [
-        company
-        for company in companies
-        if company["enabled"].strip().lower() == "true"
+        company for company in companies if company["enabled"].strip().lower() == "true"
     ]
 
 
@@ -52,8 +83,7 @@ def process_jobs(jobs):
     matching_jobs = [
         job
         for job in jobs
-        if matches_role(job["title"])
-        and matches_location_or_remote(job["location"])
+        if matches_role(job["title"]) and matches_location_or_remote(job["location"])
     ]
 
     new_jobs = [job for job in matching_jobs if save_job(job)]
@@ -82,15 +112,12 @@ def main():
         try:
             if source_type == "greenhouse":
                 raw_jobs = fetch_greenhouse_jobs(board_token)
-                normalized_jobs = [
-                    normalize_greenhouse_job(job) for job in raw_jobs
-                ]
+                normalized_jobs = [normalize_greenhouse_job(job) for job in raw_jobs]
 
             elif source_type == "lever":
                 raw_jobs = fetch_lever_jobs(board_token)
                 normalized_jobs = [
-                    normalize_lever_job(job, company_name)
-                    for job in raw_jobs
+                    normalize_lever_job(job, company_name) for job in raw_jobs
                 ]
 
             else:
@@ -108,14 +135,20 @@ def main():
 
     try:
         raw_jobs = fetch_hiretik_jobs()
-        normalized_jobs = [
-            normalize_hiretik_job(job) for job in raw_jobs
-        ]
+        normalized_jobs = [normalize_hiretik_job(job) for job in raw_jobs]
 
         excluded_seniority = (
-            "senior", "staff", "principal", "lead", "director",
-            "manager", "executive", "head", "vice president",
-            "c-level", "vp",
+            "senior",
+            "staff",
+            "principal",
+            "lead",
+            "director",
+            "manager",
+            "executive",
+            "head",
+            "vice president",
+            "c-level",
+            "vp",
         )
 
         eligible_jobs = [
@@ -133,7 +166,6 @@ def main():
     except Exception as error:
         print(f"Could not fetch HireTik: {error}")
 
-    # Workday employers
     # Workday employers
     for company in load_companies():
         if company["source_type"].strip().lower() != "workday":
@@ -169,5 +201,149 @@ def main():
 
         except Exception as error:
             print(f"Could not fetch {company_name}: {error}")
+
+    # Ashby employers
+    for company in load_companies():
+        if company["source_type"].strip().lower() != "ashby":
+            continue
+
+        company_name = company["company_name"].strip()
+        board_token = company["board_token"].strip()
+
+        if not board_token:
+            print(f"Skipping {company_name}: missing board token")
+            continue
+
+        print(f"\nChecking {company_name} (ashby)")
+
+        try:
+            raw_jobs = fetch_ashby_jobs(board_token)
+
+            normalized_jobs = [
+                normalize_ashby_job(job, company_name) for job in raw_jobs
+            ]
+
+            print(f"Jobs fetched: {len(raw_jobs)}")
+            process_jobs(normalized_jobs)
+
+        except Exception as error:
+            print(f"Could not fetch {company_name}: {error}")
+
+    # Workable employers
+    for company in load_companies():
+        if company["source_type"].strip().lower() != "workable":
+            continue
+
+        company_name = company["company_name"].strip()
+        board_token = company["board_token"].strip()
+
+        if not board_token:
+            print(f"Skipping {company_name}: missing Workable board token")
+            continue
+
+        print(f"\nChecking {company_name} (workable)")
+
+        try:
+            raw_jobs = fetch_workable_jobs(board_token)
+
+            normalized_jobs = [
+                normalize_workable_job(job, company_name) for job in raw_jobs
+            ]
+
+            print(f"Jobs fetched: {len(raw_jobs)}")
+            process_jobs(normalized_jobs)
+
+        except Exception as error:
+            print(f"Could not fetch {company_name}: {error}")
+
+
+    # Recruitee employers
+    for company in load_companies():
+        if company["source_type"].strip().lower() != "recruitee":
+            continue
+
+        company_name = company["company_name"].strip()
+        board_token = company["board_token"].strip()
+
+        if not board_token:
+            print(f"Skipping {company_name}: missing Recruitee board token")
+            continue
+
+        print(f"\nChecking {company_name} (recruitee)")
+
+        try:
+            raw_jobs = fetch_recruitee_jobs(board_token)
+            normalized_jobs = [
+                normalize_recruitee_job(job, company_name)
+                for job in raw_jobs
+            ]
+
+            print(f"Jobs fetched: {len(raw_jobs)}")
+            process_jobs(normalized_jobs)
+
+        except Exception as error:
+            print(f"Could not fetch {company_name}: {error}")
+
+    # Personio employers
+    for company in load_companies():
+        if company["source_type"].strip().lower() != "personio":
+            continue
+
+        company_name = company["company_name"].strip()
+        board_token = company["board_token"].strip()
+        careers_url = company["careers_url"].strip()
+
+        if not board_token:
+            print(f"Skipping {company_name}: missing Personio board token")
+            continue
+
+        print(f"\nChecking {company_name} (personio)")
+
+        try:
+            raw_jobs = fetch_personio_jobs(board_token)
+
+            normalized_jobs = [
+                normalize_personio_job(
+                    job,
+                    company_name=company_name,
+                    careers_url=careers_url,
+                )
+                for job in raw_jobs
+            ]
+
+            print(f"Jobs fetched: {len(raw_jobs)}")
+            process_jobs(normalized_jobs)
+
+        except Exception as error:
+            print(f"Could not fetch {company_name}: {error}")
+
+    # Rippling employers
+    for company in load_companies():
+        if company["source_type"].strip().lower() != "rippling":
+            continue
+
+        company_name = company["company_name"].strip()
+        board_token = company["board_token"].strip()
+
+        if not board_token:
+            print(f"Skipping {company_name}: missing Rippling board token")
+            continue
+
+        print(f"\nChecking {company_name} (rippling)")
+
+        try:
+            raw_jobs = fetch_rippling_jobs(board_token)
+
+            normalized_jobs = [
+                normalize_rippling_job(job, company_name)
+                for job in raw_jobs
+            ]
+
+            print(f"Jobs fetched: {len(raw_jobs)}")
+            process_jobs(normalized_jobs)
+
+        except Exception as error:
+            print(f"Could not fetch {company_name}: {error}")
+            
 if __name__ == "__main__":
     main()

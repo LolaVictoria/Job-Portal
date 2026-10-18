@@ -50,8 +50,12 @@ def is_remote(location: str) -> bool:
 
 
 def matches_location_or_remote(location: str) -> bool:
-    """Match target locations or remote jobs in relevant regions."""
+    """Keep target locations and remote jobs needing eligibility review."""
     normalized = (location or "").strip().lower()
+
+    # Keep uncertain remote listings for the user to review.
+    if "remote/location eligibility unverified" in normalized:
+        return True
 
     if matches_location(normalized):
         return True
@@ -65,7 +69,7 @@ def matches_location_or_remote(location: str) -> bool:
     ]):
         return True
 
-    # Accept remote listings without a clear geographic restriction.
+    # Reject remote listings explicitly tied to these regions.
     restricted_regions = [
         "india", "brazil", "australia", "asia",
     ]
@@ -73,7 +77,9 @@ def matches_location_or_remote(location: str) -> bool:
     if any(region in normalized for region in restricted_regions):
         return False
 
+    # Unknown geographic restrictions: keep for review.
     return True
+
 
 def classify_remote_scope(location: str) -> str:
     """Classify a remote job's advertised geographic scope."""
