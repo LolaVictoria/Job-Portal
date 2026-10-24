@@ -12,16 +12,19 @@ def normalize_job(
     job_ids = job.get("bulletFields") or []
     external_path = job.get("externalPath", "")
 
+    url = (
+        f"https://{tenant}.{domain}/en-US/{site}{external_path}"
+        if external_path else ""
+    )
+
+    print("DEBUG Workday externalPath:", external_path)
+    print("DEBUG generated URL:", url)
+
     return {
         "source": "workday",
-        "source_job_id": (
-            job_ids[0] if job_ids else external_path
-        ),
+        "source_job_id": job_ids[0] if job_ids else external_path,
         "company": company_name,
         "title": job.get("title", ""),
         "location": job.get("locationsText", ""),
-        "url": (
-            f"https://{tenant}.{domain}{external_path}"
-            if external_path else ""
-        ),
+        "url": url,
     }

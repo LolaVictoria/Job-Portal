@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def get_connection():
     """Connect to the Neon PostgreSQL database."""
     database_url = os.environ.get("DATABASE_URL")
@@ -67,9 +68,8 @@ def initialize_database():
             ON jobs(notification_status)
         """)
 
-
 def save_job(job: dict) -> bool:
-    """Save a new job and its outbox entry atomically."""
+    """Save a new job or record a newly discovered URL."""
     with get_connection() as connection:
         cursor = connection.execute("""
             INSERT INTO jobs (
@@ -81,8 +81,11 @@ def save_job(job: dict) -> bool:
                 url
             )
             VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (source, source_job_id) DO NOTHING
-            RETURNING id
+            ON CONFLICT (source, source_job_id)
+            DO UPDATE SET
+                latest_url = EXCLUDED.url
+            WHERE jobs.url IS DISTINCT FROM EXCLUDED.url
+            RETURNING id, (xmax = 0) AS is_new
         """, (
             job["source"],
             job["source_job_id"],
@@ -97,13 +100,14 @@ def save_job(job: dict) -> bool:
         if saved_job is None:
             return False
 
-        connection.execute("""
-            INSERT INTO email_outbox (job_id)
-            VALUES (%s)
-        """, (saved_job["id"],))
+        if saved_job["is_new"]:
+            connection.execute("""
+                INSERT INTO email_outbox (job_id)
+                VALUES (%s)
+            """, (saved_job["id"],))
+            return True
 
-        return True
-
+        return False
 
 def get_saved_jobs() -> list[dict]:
     """Return all saved jobs."""
@@ -133,11 +137,14 @@ def get_pending_jobs() -> list[dict]:
 def mark_job_as_sent(job_id: int) -> None:
     """Mark a job as notified using the legacy workflow."""
     with get_connection() as connection:
-        connection.execute("""
+        connection.execute(
+            """
             UPDATE jobs
             SET notification_status = 'SENT'
             WHERE id = %s
-        """, (job_id,))
+        """,
+            (job_id,),
+        )
 
 
 def get_pending_outbox_jobs() -> list[dict]:
@@ -169,15 +176,19 @@ def mark_outbox_as_sent(outbox_ids: list[int]) -> None:
         return
 
     with get_connection() as connection:
-        connection.execute("""
+        connection.execute(
+            """
             UPDATE email_outbox
             SET status = 'SENT',
                 sent_at = CURRENT_TIMESTAMP,
                 last_error = NULL
             WHERE id = ANY(%s)
-        """, (outbox_ids,))
+        """,
+            (outbox_ids,),
+        )
 
-        connection.execute("""
+        connection.execute(
+            """
             UPDATE jobs
             SET notification_status = 'SENT'
             WHERE id IN (
@@ -185,7 +196,9 @@ def mark_outbox_as_sent(outbox_ids: list[int]) -> None:
                 FROM email_outbox
                 WHERE id = ANY(%s)
             )
-        """, (outbox_ids,))
+        """,
+            (outbox_ids,),
+        )
 
 
 def record_outbox_failure(
@@ -197,10 +210,13 @@ def record_outbox_failure(
         return
 
     with get_connection() as connection:
-        connection.execute("""
+        connection.execute(
+            """
             UPDATE email_outbox
             SET attempts = attempts + 1,
                 last_error = %s
             WHERE id = ANY(%s)
               AND status = 'PENDING'
-        """, (error[:1000], outbox_ids))
+        """,
+            (error[:1000], outbox_ids),
+        )

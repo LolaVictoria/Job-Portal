@@ -176,7 +176,7 @@ def main():
         site = company["site"].strip()
         domain = company["domain"].strip()
 
-        print(f"\nChecking {company_name} (workday)")
+        
 
         try:
             raw_jobs = fetch_workday_jobs(
